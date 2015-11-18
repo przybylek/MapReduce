@@ -9,7 +9,7 @@
 HADOOP_CLASSPATH := ${JAVA_HOME}/lib/tools.jar
 export HADOOP_CLASSPATH
 
-HDFS=PSO
+HDFS=pso
 
 OBJDIR=build
 
