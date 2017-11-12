@@ -1,5 +1,5 @@
 #!/bin/bash
-export HDFS_HOME=/pso
+export HDFS_HOME=/user/adampap/psso
 export XL_HOME=./internal_use
 export DATA_HOME=$XL_HOME/dataset
 export LOG=$XL_HOME/logs.txt
