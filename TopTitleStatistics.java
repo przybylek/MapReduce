@@ -19,6 +19,7 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -38,8 +39,8 @@ public class TopTitleStatistics extends Configured implements Tool {
     @Override
     public int run(String[] args) throws Exception {
         Configuration conf = this.getConf();
+        Path tmpPath = new Path( conf.get("tmpPath") );
         FileSystem fs = FileSystem.get(conf);
-        Path tmpPath = new Path("/mp2/tmp");
         fs.delete(tmpPath, true);
 
         Job jobA = Job.getInstance(conf, "Title Count");
@@ -48,8 +49,8 @@ public class TopTitleStatistics extends Configured implements Tool {
 
         jobA.setMapperClass(TitleCountMap.class);
         jobA.setReducerClass(TitleCountReduce.class);
-	jobA.setNumReduceTasks(2);
-
+        jobA.setNumReduceTasks(2);
+        
         FileInputFormat.setInputPaths(jobA, new Path(args[0]));
         FileOutputFormat.setOutputPath(jobA, tmpPath);
 
@@ -61,7 +62,7 @@ public class TopTitleStatistics extends Configured implements Tool {
         jobB.setOutputValueClass(IntWritable.class);
 
         jobB.setMapOutputKeyClass(NullWritable.class);
-        jobB.setMapOutputValueClass(TextArrayWritable.class);
+        jobB.setMapOutputValueClass(Text.class);
 
         jobB.setMapperClass(TopTitlesStatMap.class);
         jobB.setReducerClass(TopTitlesStatReduce.class);
@@ -74,7 +75,11 @@ public class TopTitleStatistics extends Configured implements Tool {
         jobB.setOutputFormatClass(TextOutputFormat.class);
 
         jobB.setJarByClass(TopTitleStatistics.class);
-        return jobB.waitForCompletion(true) ? 0 : 1;
+
+        boolean result = jobB.waitForCompletion(true);        
+        fs.delete(tmpPath, true);
+
+        return (result) ? 0 : 1;
     }
 
     public static String readHDFSFile(String path, Configuration conf) throws IOException{
@@ -92,25 +97,13 @@ public class TopTitleStatistics extends Configured implements Tool {
         return everything.toString();
     }
 
-    public static class TextArrayWritable extends ArrayWritable {
-        public TextArrayWritable() {
-            super(Text.class);
-        }
 
-        public TextArrayWritable(String[] strings) {
-            super(Text.class);
-            Text[] texts = new Text[strings.length];
-            for (int i = 0; i < strings.length; i++) {
-                texts[i] = new Text(strings[i]);
-            }
-            set(texts);
-        }
-    }
 // <<< Don't Change
 
     public static class TitleCountMap extends Mapper<Object, Text, Text, IntWritable> {
         List<String> stopWords;
         String delimiters;
+        private final static IntWritable one = new IntWritable(1);
 
         @Override
         protected void setup(Context context) throws IOException,InterruptedException {
@@ -128,6 +121,7 @@ public class TopTitleStatistics extends Configured implements Tool {
         @Override
         public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
             // TODO
+
         }
     }
 
@@ -135,10 +129,11 @@ public class TopTitleStatistics extends Configured implements Tool {
         @Override
         public void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
             // TODO
+
         }
     }
 
-    public static class TopTitlesStatMap extends Mapper<Text, Text, NullWritable, TextArrayWritable> {
+    public static class TopTitlesStatMap extends Mapper<Text, Text, NullWritable, Text> {
         Integer N;
         // TODO
 
@@ -151,15 +146,17 @@ public class TopTitleStatistics extends Configured implements Tool {
         @Override
         public void map(Text key, Text value, Context context) throws IOException, InterruptedException {
             // TODO
+
         }
 
         @Override
         protected void cleanup(Context context) throws IOException, InterruptedException {
             // TODO
+
         }
     }
 
-    public static class TopTitlesStatReduce extends Reducer<NullWritable, TextArrayWritable, Text, IntWritable> {
+    public static class TopTitlesStatReduce extends Reducer<NullWritable, Text, Text, IntWritable> {
         Integer N;
         // TODO
 
@@ -170,72 +167,33 @@ public class TopTitleStatistics extends Configured implements Tool {
         }
 
         @Override
-        public void reduce(NullWritable key, Iterable<TextArrayWritable> values, Context context) throws IOException, InterruptedException {
+        public void reduce(NullWritable key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
             Integer sum, mean, max, min, var;
 
             // TODO
 
-            context.write(new Text("Mean"), new IntWritable(mean));
-            context.write(new Text("Sum"), new IntWritable(sum));
-            context.write(new Text("Min"), new IntWritable(min));
-            context.write(new Text("Max"), new IntWritable(max));
-            context.write(new Text("Var"), new IntWritable(var));
         }
     }
 
 }
 
 // >>> Don't Change
-class Pair<A extends Comparable<? super A>,
-        B extends Comparable<? super B>>
-        implements Comparable<Pair<A, B>> {
 
-    public final A first;
-    public final B second;
+class ComparablePair<K extends Comparable<? super K>, V extends Comparable<? super V>>
+	extends javafx.util.Pair<K,V> 
+	implements Comparable<ComparablePair<K, V>> {
 
-    public Pair(A first, B second) {
-        this.first = first;
-        this.second = second;
-    }
-
-    public static <A extends Comparable<? super A>,
-            B extends Comparable<? super B>>
-    Pair<A, B> of(A first, B second) {
-        return new Pair<A, B>(first, second);
+    public ComparablePair(K key, V value) {
+	super(key, value);
     }
 
     @Override
-    public int compareTo(Pair<A, B> o) {
-        int cmp = o == null ? 1 : (this.first).compareTo(o.first);
-        return cmp == 0 ? (this.second).compareTo(o.second) : cmp;
+    public int compareTo(ComparablePair<K, V> o) {
+        int cmp = o == null ? 1 : (this.getKey()).compareTo(o.getKey());
+        return cmp == 0 ? (this.getValue()).compareTo(o.getValue()) : cmp;
     }
 
-    @Override
-    public int hashCode() {
-        return 31 * hashcode(first) + hashcode(second);
-    }
-
-    private static int hashcode(Object o) {
-        return o == null ? 0 : o.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof Pair))
-            return false;
-        if (this == obj)
-            return true;
-        return equal(first, ((Pair<?, ?>) obj).first)
-                && equal(second, ((Pair<?, ?>) obj).second);
-    }
-
-    private boolean equal(Object o1, Object o2) {
-        return o1 == o2 || (o1 != null && o1.equals(o2));
-    }
-
-    @Override
-    public String toString() {
-        return "(" + first + ", " + second + ')';
-    }
 }
+
+
 // <<< Don't Change
