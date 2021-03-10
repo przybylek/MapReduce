@@ -55,28 +55,31 @@ public class TopTitleStatistics extends Configured implements Tool {
         FileOutputFormat.setOutputPath(jobA, tmpPath);
 
         jobA.setJarByClass(TopTitleStatistics.class);
-        jobA.waitForCompletion(true);
+        boolean result = jobA.waitForCompletion(true);
 
-        Job jobB = Job.getInstance(conf, "Top Titles Statistics");
-        jobB.setOutputKeyClass(Text.class);
-        jobB.setOutputValueClass(IntWritable.class);
+	if(result) {
+          Job jobB = Job.getInstance(conf, "Top Titles Statistics");
+          jobB.setOutputKeyClass(Text.class);
+          jobB.setOutputValueClass(IntWritable.class);
 
-        jobB.setMapOutputKeyClass(NullWritable.class);
-        jobB.setMapOutputValueClass(Text.class);
+          jobB.setMapOutputKeyClass(NullWritable.class);
+          jobB.setMapOutputValueClass(IntWritable.class);
 
-        jobB.setMapperClass(TopTitlesStatMap.class);
-        jobB.setReducerClass(TopTitlesStatReduce.class);
-        jobB.setNumReduceTasks(1);
+          jobB.setMapperClass(TopTitlesStatMap.class);
+          jobB.setReducerClass(TopTitlesStatReduce.class);
+          jobB.setNumReduceTasks(1);
 
-        FileInputFormat.setInputPaths(jobB, tmpPath);
-        FileOutputFormat.setOutputPath(jobB, new Path(args[1]));
+          FileInputFormat.setInputPaths(jobB, tmpPath);
+          FileOutputFormat.setOutputPath(jobB, new Path(args[1]));
 
-        jobB.setInputFormatClass(KeyValueTextInputFormat.class);
-        jobB.setOutputFormatClass(TextOutputFormat.class);
+          jobB.setInputFormatClass(KeyValueTextInputFormat.class);
+          jobB.setOutputFormatClass(TextOutputFormat.class);
 
-        jobB.setJarByClass(TopTitleStatistics.class);
+          jobB.setJarByClass(TopTitleStatistics.class);
 
-        boolean result = jobB.waitForCompletion(true);        
+	  result = jobB.waitForCompletion(true);
+        }
+
         fs.delete(tmpPath, true);
 
         return (result) ? 0 : 1;
@@ -101,8 +104,8 @@ public class TopTitleStatistics extends Configured implements Tool {
 // <<< Don't Change
 
     public static class TitleCountMap extends Mapper<Object, Text, Text, IntWritable> {
-        List<String> stopWords;
-        String delimiters;
+        private List<String> stopWords;
+        private String delimiters;
         private final static IntWritable one = new IntWritable(1);
 
         @Override
@@ -133,8 +136,9 @@ public class TopTitleStatistics extends Configured implements Tool {
         }
     }
 
-    public static class TopTitlesStatMap extends Mapper<Text, Text, NullWritable, Text> {
-        Integer N;
+    public static class TopTitlesStatMap extends Mapper<Text, Text, NullWritable, IntWritable> {
+        private Integer N;
+	private IntWritable outValue = new IntWritable(0);
         // TODO
 
         @Override
@@ -156,8 +160,8 @@ public class TopTitleStatistics extends Configured implements Tool {
         }
     }
 
-    public static class TopTitlesStatReduce extends Reducer<NullWritable, Text, Text, IntWritable> {
-        Integer N;
+    public static class TopTitlesStatReduce extends Reducer<NullWritable, IntWritable, Text, IntWritable> {
+        private Integer N;
         // TODO
 
         @Override
@@ -167,7 +171,7 @@ public class TopTitleStatistics extends Configured implements Tool {
         }
 
         @Override
-        public void reduce(NullWritable key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+        public void reduce(NullWritable key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
             Integer sum, mean, max, min, var;
 
             // TODO
@@ -178,7 +182,6 @@ public class TopTitleStatistics extends Configured implements Tool {
 }
 
 // >>> Don't Change
-
 class ComparablePair<K extends Comparable<? super K>, V extends Comparable<? super V>>
 	extends javafx.util.Pair<K,V> 
 	implements Comparable<ComparablePair<K, V>> {
@@ -194,6 +197,4 @@ class ComparablePair<K extends Comparable<? super K>, V extends Comparable<? sup
     }
 
 }
-
-
 // <<< Don't Change
