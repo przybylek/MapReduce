@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
+import java.util.AbstractMap;
 
 // Don't Change >>>
 public class TopTitleStatistics extends Configured implements Tool {
@@ -183,7 +184,7 @@ public class TopTitleStatistics extends Configured implements Tool {
 
 // >>> Don't Change
 class ComparablePair<K extends Comparable<? super K>, V extends Comparable<? super V>>
-	extends javafx.util.Pair<K,V> 
+	extends AbstractMap.SimpleEntry<K,V> 
 	implements Comparable<ComparablePair<K, V>> {
 
     public ComparablePair(K key, V value) {

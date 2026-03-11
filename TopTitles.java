@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
+import java.util.AbstractMap;
 
 // >>> Don't Change
 public class TopTitles extends Configured implements Tool {
@@ -190,17 +191,16 @@ public class TopTitles extends Configured implements Tool {
 }
 
 // >>> Don't Change
-class ComparablePair<A extends Comparable<? super A>,
-        B extends Comparable<? super B>>
-        extends javafx.util.Pair<A,B> 
-        implements Comparable<ComparablePair<A, B>>{
+class ComparablePair<K extends Comparable<? super K>, V extends Comparable<? super V>>
+	extends AbstractMap.SimpleEntry<K,V> 
+	implements Comparable<ComparablePair<K, V>> {
 
-    public ComparablePair(A key, B value) {
+    public ComparablePair(K key, V value) {
 	super(key, value);
     }
 
     @Override
-    public int compareTo(ComparablePair<A, B> o) {
+    public int compareTo(ComparablePair<K, V> o) {
         int cmp = o == null ? 1 : (this.getKey()).compareTo(o.getKey());
         return cmp == 0 ? (this.getValue()).compareTo(o.getValue()) : cmp;
     }

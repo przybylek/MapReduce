@@ -6,6 +6,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.ArrayWritable;
 import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.lang.Integer;
 import java.util.StringTokenizer;
 import java.util.TreeSet;
+import java.util.AbstractMap;
 
 // >>> Don't Change
 public class TopPopularLinks extends Configured implements Tool {
@@ -113,9 +115,9 @@ public class TopPopularLinks extends Configured implements Tool {
         public void reduce(NullWritable key, Iterable<IntArrayWritable> values, Context context) throws IOException, InterruptedException {
         
 	        for (IntArrayWritable  val: values) {
-	        	IntWritable[] pair = (IntWritable[]) val.toArray();
-	        	Integer id = pair[0].get();
-	        	Integer count = pair[1].get();
+			Writable[] pair = val.get();
+			Integer id = ((IntWritable) pair[0]).get();
+			Integer count = ((IntWritable) pair[1]).get();
 	        	countToIdMap.add(new ComparablePair<Integer, Integer>(count, id));
 	        }
 	
@@ -135,7 +137,7 @@ public class TopPopularLinks extends Configured implements Tool {
 // >>> Don't Change
 
 class ComparablePair<K extends Comparable<? super K>, V extends Comparable<? super V>>
-	extends javafx.util.Pair<K,V> 
+	extends AbstractMap.SimpleEntry<K,V> 
 	implements Comparable<ComparablePair<K, V>> {
 
     public ComparablePair(K key, V value) {
@@ -149,5 +151,4 @@ class ComparablePair<K extends Comparable<? super K>, V extends Comparable<? sup
     }
 
 }
-
 // <<< Don't Change
